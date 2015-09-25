@@ -68,6 +68,8 @@ mod tests {
     let pt3 = vec![1.0, 3.0];
     let pt4 = vec![0.1, 0.1];
     let pt5 = vec![0.0, 0.0];
+    let pt6 = vec![3.0, 0.0];
+    let pt7 = vec![1.0, 0.0];
 
     let ring1 = vec![vec![0.0, 0.0], vec![2.0, 0.0], vec![2.0, 2.0], vec![0.0, 2.0], vec![0.0, 0.0]];
     let ring2 = vec![vec![0.0, 0.0], vec![0.0, 2.0], vec![2.0, 2.0], vec![2.0, 0.0], vec![0.0, 0.0]];
@@ -95,9 +97,12 @@ mod tests {
     assert_eq!(in_ring(&pt4, &ring4), true);
 
     assert_eq!(in_ring(&pt5, &ring1), true);
-    assert_eq!(in_ring(&pt4, &ring2), true);
-    assert_eq!(in_ring(&pt4, &ring3), true);
-    assert_eq!(in_ring(&pt4, &ring4), true);
+    assert_eq!(in_ring(&pt5, &ring2), true);
+    assert_eq!(in_ring(&pt5, &ring3), true);
+    assert_eq!(in_ring(&pt5, &ring4), true);
+    
+    assert_eq!(in_ring(&pt6, &ring4), false);
+    assert_eq!(in_ring(&pt7, &ring4), true);
   }
 
   #[test]
