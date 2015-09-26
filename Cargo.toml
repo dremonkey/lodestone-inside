@@ -2,3 +2,9 @@
 name = "lodestone-inside"
 version = "0.1.0"
 authors = ["dremonkey <a.deutmeyer@gmail.com>"]
+
+[dependencies.lodestone-point]
+path = "../lodestone-point"
+
+[dependencies.lodestone-polygon]
+path = "../lodestone-polygon"

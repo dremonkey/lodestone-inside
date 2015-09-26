@@ -1,6 +1,53 @@
+/// The main crate for lodestone-inside
+///
+/// ## Overview
+/// 
+/// Determines if a given FeaturePoint is inside a given FeaturePolygon. This 
+/// takes into account holes in the FeaturePolygon.
+/// Inspired by [turf-inside](https://github.com/Turfjs/turf-inside).
+
+extern crate lodestone_point;
+extern crate lodestone_polygon;
+
+use lodestone_point::FeaturePoint;
+use lodestone_polygon::FeaturePolygon;
+
+pub trait Inside {
+  fn inside(&self, poly: &FeaturePolygon) -> bool;
+}
+
+impl Inside for FeaturePoint {
+  fn inside(&self, poly: &FeaturePolygon) -> bool {
+    inside(&self, &poly)
+  }
+}
+
+pub fn inside(
+    pt: &FeaturePoint,
+    poly: &FeaturePolygon) -> bool {
+
+  let pt_coords = pt.coordinates();
+  let poly_coords = poly.coordinates();
+  
+  // determine if the point is inside the shell
+  let mut iter = poly_coords.iter();
+  let mut inside_poly = in_ring(&pt_coords, iter.next().unwrap());
+
+  // if inside the shell check the holes
+  if inside_poly {
+    for hole in iter {
+      if in_ring(&pt_coords, &hole) {
+        inside_poly = false;
+        break;
+      }
+    }
+  }
+
+  inside_poly
+}
 
 /// Algorithm: [Winding Number](http://geomalgorithms.com/a03-_inclusion.html)
-pub fn in_ring(
+fn in_ring(
     pt: &Vec<f64>, 
     ring: &Vec<Vec<f64>>) -> bool {
 
@@ -59,11 +106,34 @@ fn relative_pos(
 
 #[cfg(test)]
 mod tests {
-  use super::{in_ring, is_left, is_right, relative_pos};
+  use lodestone_point::FeaturePoint;
+  use lodestone_polygon::FeaturePolygon;
+  use super::{inside, in_ring, is_left, is_right, relative_pos};
+
+  #[test]
+  fn test_inside_simple() {
+    let outer = vec![vec![0.0, 0.0], vec![2.0, 0.0], vec![2.0, 2.0], vec![0.0, 2.0], vec![0.0, 0.0]];
+    let poly = FeaturePolygon::new(vec![outer]);
+    let pt1 = FeaturePoint::new(vec![1.0, 1.0]);
+
+    assert_eq!(inside(&pt1, &poly), true);
+  }
+
+  #[test]
+  fn test_inside_concave_hole() {
+    let outer = vec![vec![-1.0, -1.0], vec![3.0, 3.0], vec![2.0, 0.0], vec![5.0, -1.0], vec![-1.0, -1.0]];
+    let hole = vec![vec![1.0, 0.0], vec![1.2, 0.5], vec![1.6, 0.5], vec![1.4, 0.0], vec![1.0, 0.0]];
+    let poly = FeaturePolygon::new(vec![outer, hole]);
+    let pt1 = FeaturePoint::new(vec![0.0, 0.0]);
+    let pt2 = FeaturePoint::new(vec![1.35, 0.3]); // in hole
+
+    assert_eq!(inside(&pt1, &poly), true);
+    assert_eq!(inside(&pt2, &poly), false);
+  }
 
   #[test]
   fn test_in_ring() {
-    let pt = vec![1.0, 1.0];
+    let pt1 = vec![1.0, 1.0];
     let pt2 = vec![-1.0, 2.0];
     let pt3 = vec![1.0, 3.0];
     let pt4 = vec![0.1, 0.1];
@@ -76,10 +146,10 @@ mod tests {
     let ring3 = vec![vec![0.0, 0.0], vec![3.0, 3.0], vec![2.0, 0.0], vec![0.0, 0.0]];
     let ring4 = vec![vec![-1.0, -1.0], vec![3.0, 3.0], vec![2.0, 0.0], vec![5.0, -1.0], vec![-1.0, -1.0]];
     
-    assert_eq!(in_ring(&pt, &ring1), true);
-    assert_eq!(in_ring(&pt, &ring2), true);
-    assert_eq!(in_ring(&pt, &ring3), true);
-    assert_eq!(in_ring(&pt, &ring4), true);
+    assert_eq!(in_ring(&pt1, &ring1), true);
+    assert_eq!(in_ring(&pt1, &ring2), true);
+    assert_eq!(in_ring(&pt1, &ring3), true);
+    assert_eq!(in_ring(&pt1, &ring4), true);
 
     assert_eq!(in_ring(&pt2, &ring1), false);
     assert_eq!(in_ring(&pt2, &ring2), false);
